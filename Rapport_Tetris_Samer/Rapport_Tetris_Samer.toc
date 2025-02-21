@@ -1,0 +1,94 @@
+\babel@toc {french}{}\relax 
+\contentsline {chapter}{\numberline {1}Introduction}{3}{}%
+\contentsline {section}{\numberline {1.1}Contexte du projet}{3}{}%
+\contentsline {section}{\numberline {1.2}Objectif du projet}{3}{}%
+\contentsline {section}{\numberline {1.3}Compilation du code}{3}{}%
+\contentsline {chapter}{\numberline {2}Implémentation}{4}{}%
+\contentsline {section}{\numberline {2.1}Gestion des déplacements des Tetriminos}{4}{}%
+\contentsline {subsection}{\numberline {2.1.1}Représentation des Tetriminos}{4}{}%
+\contentsline {subsection}{\numberline {2.1.2}Types de déplacements}{4}{}%
+\contentsline {subsection}{\numberline {2.1.3}Vérification des collisions}{5}{}%
+\contentsline {paragraph}{Exemple : Vérification à gauche}{5}{}%
+\contentsline {subsection}{\numberline {2.1.4}Implémentation des déplacements}{5}{}%
+\contentsline {paragraph}{Exemple : Déplacement à gauche}{5}{}%
+\contentsline {section}{\numberline {2.2}Gestion des rotations des Tetriminos}{6}{}%
+\contentsline {subsection}{\numberline {2.2.1}Principe de la rotation}{6}{}%
+\contentsline {subsection}{\numberline {2.2.2}Vérification de la validité de la rotation}{7}{}%
+\contentsline {paragraph}{Exemple : Validation d'une rotation}{7}{}%
+\contentsline {subsection}{\numberline {2.2.3}Implémentation de la rotation}{7}{}%
+\contentsline {paragraph}{Exemple : Application de la rotation}{7}{}%
+\contentsline {section}{\numberline {2.3}Calcul du score et des niveaux}{8}{}%
+\contentsline {subsection}{\numberline {2.3.1}Principe général}{8}{}%
+\contentsline {subsection}{\numberline {2.3.2}Calcul du score}{8}{}%
+\contentsline {paragraph}{Extrait de code : Gestion des points}{8}{}%
+\contentsline {subsection}{\numberline {2.3.3}Gestion des niveaux}{9}{}%
+\contentsline {paragraph}{Extrait de code : Mise à jour du niveau}{9}{}%
+\contentsline {subsection}{\numberline {2.3.4}Vitesse de descente des Tetriminos}{9}{}%
+\contentsline {paragraph}{Extrait de code : Calcul de la vitesse}{9}{}%
+\contentsline {section}{\numberline {2.4}L’affichage graphique avec SDL}{10}{}%
+\contentsline {subsection}{\numberline {2.4.1}Initialisation de SDL}{10}{}%
+\contentsline {subsection}{\numberline {2.4.2}Affichage du plateau de jeu}{11}{}%
+\contentsline {paragraph}{Affichage des blocs fixés}{11}{}%
+\contentsline {paragraph}{Affichage des Tetriminos en mouvement}{11}{}%
+\contentsline {subsection}{\numberline {2.4.3}Affichage des statistiques}{12}{}%
+\contentsline {paragraph}{Affichage du score}{12}{}%
+\contentsline {paragraph}{Prévisualisation du prochain Tetrimino}{12}{}%
+\contentsline {subsection}{\numberline {2.4.4}Gestion des états du jeu}{14}{}%
+\contentsline {paragraph}{Exemple : Écran "Game Over"}{14}{}%
+\contentsline {subsection}{\numberline {2.4.5}Boucle de rendu}{14}{}%
+\contentsline {section}{\numberline {2.5}La gestion des entrées utilisateur}{15}{}%
+\contentsline {subsection}{\numberline {2.5.1}Principe général}{15}{}%
+\contentsline {subsection}{\numberline {2.5.2}Gestion des événements SDL}{15}{}%
+\contentsline {paragraph}{Exemple : Gestion des touches}{15}{}%
+\contentsline {subsection}{\numberline {2.5.3}Implémentation des actions}{16}{}%
+\contentsline {paragraph}{Exemple : Rotation avec \texttt {SDL\_KEYDOWN}}{16}{}%
+\contentsline {subsection}{\numberline {2.5.4}Gestion des états (Pause et Quitter)}{16}{}%
+\contentsline {paragraph}{Exemple : Pause}{16}{}%
+\contentsline {subsection}{\numberline {2.5.5}Synchronisation avec la boucle principale}{17}{}%
+\contentsline {paragraph}{Exemple : Synchronisation dans la boucle}{17}{}%
+\contentsline {section}{\numberline {2.6}Fin de partie}{17}{}%
+\contentsline {subsection}{\numberline {2.6.1}Détection de la fin de partie}{17}{}%
+\contentsline {paragraph}{Exemple : Matrice bloquée}{17}{}%
+\contentsline {subsection}{\numberline {2.6.2}Implémentation}{18}{}%
+\contentsline {subsection}{\numberline {2.6.3}Affichage de l'écran "Game Over"}{18}{}%
+\contentsline {paragraph}{Statistiques finales affichées :}{18}{}%
+\contentsline {subsection}{\numberline {2.6.4}Relancer ou quitter la partie}{18}{}%
+\contentsline {paragraph}{Exemple : Gestion des entrées après la fin}{18}{}%
+\contentsline {chapter}{\numberline {3}Problèmes rencontrés}{19}{}%
+\contentsline {section}{\numberline {3.1}Problèmes rencontrés et solutions}{19}{}%
+\contentsline {subsection}{\numberline {3.1.1}Absence de chiffres dans la police utilisée}{19}{}%
+\contentsline {paragraph}{Problème :}{19}{}%
+\contentsline {paragraph}{Solution :}{19}{}%
+\contentsline {subsection}{\numberline {3.1.2}Blocs stagnants en haut du plateau}{20}{}%
+\contentsline {paragraph}{Problème :}{20}{}%
+\contentsline {paragraph}{Solution :}{20}{}%
+\contentsline {subsection}{\numberline {3.1.3}Segmentation fault imprévisible}{20}{}%
+\contentsline {paragraph}{Problème :}{20}{}%
+\contentsline {paragraph}{Solution :}{20}{}%
+\contentsline {subsection}{\numberline {3.1.4}Game Over non détecté}{21}{}%
+\contentsline {paragraph}{Problème :}{21}{}%
+\contentsline {paragraph}{Solution :}{21}{}%
+\contentsline {chapter}{\numberline {4}Choix techniques et justifications}{22}{}%
+\contentsline {section}{\numberline {4.1}Utilisation d'un buffer \(5 \times 5\) au lieu de \(20 \times 10\)}{22}{}%
+\contentsline {paragraph}{Problème et contexte :}{22}{}%
+\contentsline {subsection}{\numberline {4.1.1}Avantages d’un buffer \(5 \times 5\)}{22}{}%
+\contentsline {subsection}{\numberline {4.1.2}Implémentation}{22}{}%
+\contentsline {paragraph}{Déclaration du buffer :}{22}{}%
+\contentsline {paragraph}{Utilisation dans les fonctions :}{23}{}%
+\contentsline {subsection}{\numberline {4.1.3}Limites de ce choix}{23}{}%
+\contentsline {section}{\numberline {4.2}Affichage des Minos et Raffinements esthétiques}{24}{}%
+\contentsline {subsection}{\numberline {4.2.1}Choix des dimensions des bandes de relief}{24}{}%
+\contentsline {subsection}{\numberline {4.2.2}Ajustements des proportions et impact visuel}{24}{}%
+\contentsline {subsection}{\numberline {4.2.3}Comparaison visuelle des rendus}{25}{}%
+\contentsline {subsection}{\numberline {4.2.4}Ajustements spécifiques des bandes sombre}{26}{}%
+\contentsline {chapter}{\numberline {5}Résultats}{27}{}%
+\contentsline {section}{\numberline {5.1}Présentation du jeu final}{27}{}%
+\contentsline {subsection}{\numberline {5.1.1}Écran de menu}{27}{}%
+\contentsline {subsection}{\numberline {5.1.2}En jeu}{28}{}%
+\contentsline {subsection}{\numberline {5.1.3}Pause}{29}{}%
+\contentsline {subsection}{\numberline {5.1.4}Fin de partie}{30}{}%
+\contentsline {section}{\numberline {5.2}Limites et aspects à améliorer}{31}{}%
+\contentsline {subsection}{\numberline {5.2.1}Limites actuelles}{31}{}%
+\contentsline {subsection}{\numberline {5.2.2}Propositions d'amélioration}{31}{}%
+\contentsline {chapter}{\numberline {6}Conclusion}{32}{}%
+\contentsline {chapter}{\numberline {7}Références}{33}{}%
