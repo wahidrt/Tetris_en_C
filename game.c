@@ -98,10 +98,10 @@ Game *game_new(int x, int y)
     g->freq = SDL_GetPerformanceFrequency();
     g->count = SDL_GetPerformanceCounter();
 
-    g->soundLineClear = Mix_LoadWAV("line.wav");
+    g->soundLineClear = Mix_LoadWAV("Line.wav");
     if (!g->soundLineClear)
     {
-        fprintf(stderr, "Erreur Mix_LoadWAV Bloc.wav: %s\n", Mix_GetError());
+        fprintf(stderr, "Erreur Mix_LoadWAV Line.wav: %s\n", Mix_GetError());
         game_del(g);
         return NULL;
     }

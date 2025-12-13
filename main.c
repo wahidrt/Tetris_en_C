@@ -8,6 +8,8 @@
 
 int main(int argc, char *argv[])
 {
+    (void)argc;
+    (void)argv;
     srand((unsigned)time(NULL));
     int pos_x = 50;
     int pos_y = 50;
@@ -23,7 +25,4 @@ int main(int argc, char *argv[])
     game_del(game);
 
     return EXIT_SUCCESS;
-
-    (void)argc;
-    (void)argv;
 }

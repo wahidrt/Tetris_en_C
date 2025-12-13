@@ -405,7 +405,7 @@ void tetris_rotate(Tetris *tet)
     {
         for (int j = 0; j < 5; j++)
         {
-            new_buffer[j][4 - i] = tetriminos[tet->current_type][new_rotation][i][j];
+            new_buffer[i][j] = tetriminos[tet->current_type][new_rotation][i][j];
         }
     }
     // Vérifier collisions
@@ -494,15 +494,12 @@ void tetris_shift_board(Tetris *tet)
         }
 
         // 4) Gestion du niveau : +1 toutes les 10 lignes (jusqu’à 15 max)
-        while (tet->nbr_lines >= 10)
+        int calculated_level = 1 + (tet->nbr_lines / 10);
+        if (calculated_level > 15) calculated_level = 15;
+
+        if (calculated_level > tet->level)
         {
-            tet->nbr_lines -= 10;
-            tet->level++;
-            if (tet->level > 15)
-            {
-                tet->level = 15;
-                break; // on n'augmente pas plus
-            }
+            tet->level = calculated_level;
         }
     }
 }
