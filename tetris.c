@@ -1,3 +1,16 @@
+/*
+ * tetris.c
+ *
+ * Ce module contient la logique principale du Tetris : définition
+ * des sept Tetriminos et de leurs rotations, création du plateau,
+ * déplacements, collisions, rotation, fixation des pièces, suppression
+ * des lignes, calcul du score, progression des niveaux et vitesse de chute.
+ *
+ * Le plateau possède 20 lignes et 10 colonnes. La pièce courante est
+ * représentée dans un buffer de 5 x 5 cases avant d'être fixée dans
+ * la matrice principale.
+ */
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -5,6 +18,14 @@
 
 #include "tetris.h"
 
+/*
+ * Table des formes des Tetriminos.
+ *
+ * Dimensions : [type][rotation][ligne][colonne].
+ * Chaque type possède quatre orientations stockées dans une matrice
+ * de 5 x 5. Une valeur nulle représente une case vide ; une valeur de
+ * 1 à 7 représente un bloc et permet aussi d'identifier sa couleur.
+ */
 const char tetriminos[7][4][5][5] = {
     // TYPE_I
     {
@@ -199,6 +220,15 @@ const char tetriminos[7][4][5][5] = {
 // --------------------------------------------------
 // Crée et initialise une nouvelle instance de Tetris
 // --------------------------------------------------
+/**
+ * Crée une nouvelle structure Tetris.
+ *
+ * @return Adresse de la structure allouée, ou NULL en cas d'échec.
+ *
+ * La matrice du plateau et le buffer de la pièce sont vidés. Les types
+ * courant et suivant sont ensuite choisis aléatoirement. Les autres
+ * paramètres de partie sont initialisés lors du lancement ou du reset.
+ */
 Tetris *tetris_new()
 {
     Tetris *tet = malloc(sizeof(Tetris)); // Alloue la mémoire pour la structure Tetris
@@ -217,6 +247,11 @@ Tetris *tetris_new()
 // --------------------------------------------------
 // Libère l'instance de Tetris
 // --------------------------------------------------
+/**
+ * Libère la mémoire occupée par une structure Tetris.
+ *
+ * @param tet Structure à détruire. Une valeur NULL est acceptée.
+ */
 void tetris_del(Tetris *tet)
 {
     if (tet)
@@ -227,6 +262,15 @@ void tetris_del(Tetris *tet)
 // --------------------------------------------------
 // Remet un nouveau Tetrimino dans le buffer
 // --------------------------------------------------
+/**
+ * Prépare un nouveau Tetrimino dans le buffer de déplacement.
+ *
+ * @param tet État logique de la partie.
+ *
+ * La prochaine pièce devient la pièce courante, une nouvelle pièce
+ * suivante est tirée, la position de départ est rétablie et la rotation
+ * initiale est copiée dans le buffer 5 x 5.
+ */
 void tetris_reset(Tetris *tet)
 {
     // Vider le buffer
@@ -253,6 +297,12 @@ void tetris_reset(Tetris *tet)
 // --------------------------------------------------
 // Vérifie si le Tetrimino peut aller à gauche
 // --------------------------------------------------
+/**
+ * Vérifie si la pièce courante peut se déplacer d'une colonne à gauche.
+ *
+ * @param tet État logique de la partie.
+ * @return 1 si le déplacement est possible, 0 en cas de mur ou collision.
+ */
 int tetris_can_go_left(Tetris *tet)
 {
     for (int i = 0; i < 5; i++)
@@ -261,6 +311,7 @@ int tetris_can_go_left(Tetris *tet)
         {
             if (tet->buffer[i][j])
             {
+                // Les coordonnées globales permettent de comparer le buffer au plateau.
                 int row = tet->current_line + i;
                 int col = tet->current_column + j;
                 // Si on est collé au mur gauche ou si la case à gauche est déjà occupée
@@ -274,6 +325,11 @@ int tetris_can_go_left(Tetris *tet)
     return 1;
 }
 
+/**
+ * Déplace la pièce courante d'une colonne vers la gauche si possible.
+ *
+ * @param tet État logique de la partie.
+ */
 void tetris_move_left(Tetris *tet)
 {
     if (tetris_can_go_left(tet))
@@ -284,6 +340,12 @@ void tetris_move_left(Tetris *tet)
 // --------------------------------------------------
 // Vérifie si le Tetrimino peut aller à droite
 // --------------------------------------------------
+/**
+ * Vérifie si la pièce courante peut se déplacer d'une colonne à droite.
+ *
+ * @param tet État logique de la partie.
+ * @return 1 si le déplacement est possible, 0 en cas de mur ou collision.
+ */
 int tetris_can_go_right(Tetris *tet)
 {
     for (int i = 0; i < 5; i++)
@@ -305,6 +367,11 @@ int tetris_can_go_right(Tetris *tet)
     return 1;
 }
 
+/**
+ * Déplace la pièce courante d'une colonne vers la droite si possible.
+ *
+ * @param tet État logique de la partie.
+ */
 void tetris_move_right(Tetris *tet)
 {
     if (tetris_can_go_right(tet))
@@ -316,6 +383,13 @@ void tetris_move_right(Tetris *tet)
 // ----------------------------------
 // Vérifie si le Tetrimino peut descendre
 // ----------------------------------
+/**
+ * Vérifie si la pièce courante peut descendre d'une ligne.
+ *
+ * @param tet État logique de la partie.
+ * @return 1 si la case inférieure est libre, 0 si le sol ou un bloc
+ *         déjà fixé empêche la descente.
+ */
 int tetris_can_go_down(Tetris *tet)
 {
     for (int i = 0; i < 5; i++)
@@ -338,6 +412,16 @@ int tetris_can_go_down(Tetris *tet)
 // ----------------------------------
 // Descente effective
 // ----------------------------------
+/**
+ * Tente de faire descendre la pièce courante d'une ligne.
+ *
+ * @param tet État logique de la partie.
+ * @return 1 si la pièce a effectivement descendu ;
+ *         0 si elle ne pouvait plus descendre, a été fixée au plateau
+ *           et a été remplacée par la pièce suivante ;
+ *        -1 si la pièce est bloquée dès son apparition, ce qui indique
+ *           la fin de la partie.
+ */
 int tetris_move_down(Tetris *tet)
 {
     // Peut-on descendre ?
@@ -366,6 +450,13 @@ int tetris_move_down(Tetris *tet)
 // ----------------------------------
 // Vérifie si un buffer est valide
 // ----------------------------------
+/**
+ * Vérifie qu'une configuration temporaire de la pièce est valide.
+ *
+ * @param tet État logique de la partie.
+ * @param new_buffer Forme 5 x 5 à tester, généralement après rotation.
+ * @return 1 si toutes les cases sont dans le plateau et libres, 0 sinon.
+ */
 int tetris_is_valid_position(Tetris *tet, char new_buffer[5][5])
 {
     for (int i = 0; i < 5; i++)
@@ -395,6 +486,15 @@ int tetris_is_valid_position(Tetris *tet, char new_buffer[5][5])
 // ---------------------------------------------
 // Effectue la rotation du Tetrimino si possible
 // ---------------------------------------------
+/**
+ * Effectue la rotation suivante de la pièce lorsque celle-ci est valide.
+ *
+ * @param tet État logique de la partie.
+ *
+ * La nouvelle orientation est d'abord construite dans un buffer
+ * temporaire. Elle n'est copiée dans la pièce courante qu'après la
+ * vérification des limites du plateau et des collisions.
+ */
 void tetris_rotate(Tetris *tet)
 {
     // On va juste vérifier si la rotation suivante est valide
@@ -418,6 +518,16 @@ void tetris_rotate(Tetris *tet)
 // ------------------------------------------------------------------
 // Fixe le Tetrimino dans la matrix et gère la destruction des lignes
 // ------------------------------------------------------------------
+/**
+ * Fixe la pièce courante dans le plateau et met la partie à jour.
+ *
+ * @param tet État logique de la partie.
+ *
+ * La fonction copie les blocs du buffer dans la matrice, détecte les
+ * lignes complètes, décale les lignes restantes, actualise le score
+ * selon le nombre de lignes supprimées et augmente le niveau toutes
+ * les dix lignes, avec un niveau maximal égal à 15.
+ */
 void tetris_shift_board(Tetris *tet)
 {
     // ------------------------------------------------------------------
@@ -510,6 +620,15 @@ void tetris_shift_board(Tetris *tet)
 // ------------------------------------------------------------------
 // Renvoie la vitesse de descente en fonction du niveau
 // ------------------------------------------------------------------
+/**
+ * Calcule l'intervalle de temps entre deux descentes automatiques.
+ *
+ * @param tet État logique de la partie contenant le niveau courant.
+ * @return Durée en secondes avant la prochaine descente automatique.
+ *
+ * Le niveau est borné entre 1 et 15 et la durée minimale est limitée
+ * à 0,007 seconde afin d'éviter une vitesse numériquement excessive.
+ */
 float tetris_get_drop_speed(Tetris *tet)
 {
     // On borne le niveau entre 1 et 15
