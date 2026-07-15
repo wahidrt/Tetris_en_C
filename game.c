@@ -1,28 +1,60 @@
+/*
+ * game.c
+ *
+ * Ce module assure le lien entre la logique du Tetris et son interface SDL.
+ * Il prend en charge :
+ *   - l'initialisation de SDL, SDL_ttf et SDL_mixer ;
+ *   - la création et la destruction des ressources du jeu ;
+ *   - l'affichage des différents écrans (menu, jeu, pause, game over) ;
+ *   - la gestion des événements clavier ;
+ *   - la descente automatique des Tetriminos ;
+ *   - le déclenchement de la musique et des effets sonores.
+ *
+ * La logique propre au plateau et aux Tetriminos reste principalement
+ * définie dans tetris.c et mino.c. Ce fichier joue donc le rôle de
+ * contrôleur principal et de couche d'affichage du programme.
+ */
+
+// Bibliothèques standard : allocation dynamique et entrées/sorties.
 #include <stdlib.h>
 #include <stdio.h>
+// Bibliothèques SDL utilisées pour le son, la fenêtre et le rendu.
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL.h>
 
+// En-têtes internes décrivant la structure Game, les blocs et le plateau.
 #include "game.h"
 #include "mino.h"
 #include "tetris.h"
-// -------------------------------------------------------------
-// Fonction interne pour initialiser la SDL et créer une fenêtre
-// -------------------------------------------------------------
+/**
+ * Initialise les sous-systèmes graphiques, textuels et audio du jeu.
+ *
+ * @param g Structure Game dans laquelle les ressources SDL sont stockées.
+ * @param x Position horizontale initiale de la fenêtre à l'écran.
+ * @param y Position verticale initiale de la fenêtre à l'écran.
+ * @return 1 si toutes les initialisations réussissent, 0 sinon.
+ *
+ * Cette fonction est déclarée static car elle n'est utilisée que dans
+ * ce fichier. Chaque erreur est affichée dans stderr afin de faciliter
+ * le diagnostic d'un problème SDL, TTF ou audio.
+ */
 static int game_sdl_init(Game *g, int x, int y)
 {
+    // Initialisation du sous-système vidéo de SDL.
     if (SDL_Init(SDL_INIT_VIDEO) != 0)
     {
         fprintf(stderr, "Erreur SDL_Init: %s\n", SDL_GetError());
         return 0;
     }
 
+    // Initialisation de SDL_ttf pour pouvoir afficher du texte.
     if (TTF_Init() != 0)
     {
         fprintf(stderr, "Erreur TTF_Init: %s\n", TTF_GetError());
         return 0;
     }
 
+    // Création d’une fenêtre de 500 x 600 pixels.
     g->win = SDL_CreateWindow("Tetris", x, y, 500, 600, SDL_WINDOW_SHOWN);
     if (!g->win)
     {
@@ -30,6 +62,8 @@ static int game_sdl_init(Game *g, int x, int y)
         return 0;
     }
 
+    // Le rendu accéléré utilise la carte graphique ; la synchronisation
+    // verticale limite les déchirures d’image.
     g->ren = SDL_CreateRenderer(g->win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     if (!g->ren)
     {
@@ -37,6 +71,8 @@ static int game_sdl_init(Game *g, int x, int y)
         return 0;
     }
 
+    // Chargement de deux tailles de la même police : une petite pour
+    // les informations et une grande pour les titres.
     g->fontSmall = TTF_OpenFont("Tetris.ttf", 14);
     if (!g->fontSmall)
     {
@@ -50,6 +86,8 @@ static int game_sdl_init(Game *g, int x, int y)
         return 0;
     }
 
+    // Ouverture du périphérique audio : fréquence 44,1 kHz, stéréo,
+    // avec une mémoire tampon de 2048 échantillons.
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
     {
         fprintf(stderr, "Erreur Mix_OpenAudio: %s\n", Mix_GetError());
@@ -58,9 +96,18 @@ static int game_sdl_init(Game *g, int x, int y)
 
     return 1;
 }
-// ----------------------------------------
-// Initialise une nouvelle instance du jeu
-// ----------------------------------------
+/**
+ * Crée et initialise une nouvelle instance complète du jeu.
+ *
+ * @param x Position horizontale de la fenêtre.
+ * @param y Position verticale de la fenêtre.
+ * @return Un pointeur vers la structure Game créée, ou NULL en cas d'échec.
+ *
+ * La fonction alloue d'abord la structure Game, initialise tous ses
+ * pointeurs à NULL, crée l'environnement SDL et le plateau Tetris,
+ * puis charge les différents sons. En cas d'erreur, game_del est appelée
+ * pour libérer proprement toutes les ressources déjà créées.
+ */
 Game *game_new(int x, int y)
 {
     Game *g = (Game *)malloc(sizeof(Game));
@@ -70,6 +117,8 @@ Game *game_new(int x, int y)
         return NULL;
     }
 
+    // Initialisation défensive : game_del pourra tester chaque pointeur
+    // sans risquer de libérer une zone mémoire non initialisée.
     g->win = NULL;
     g->ren = NULL;
     g->fontSmall = NULL;
@@ -95,9 +144,13 @@ Game *game_new(int x, int y)
     g->tet_offset_y = 0;
     g->mino_size = 30;
 
+    // Fréquence et compteur haute précision utilisés pour mesurer le
+    // temps écoulé entre deux descentes automatiques.
     g->freq = SDL_GetPerformanceFrequency();
     g->count = SDL_GetPerformanceCounter();
 
+    // Chargement des effets sonores et des musiques utilisés pendant
+    // les différentes étapes de la partie.
     g->soundLineClear = Mix_LoadWAV("line.wav");
     if (!g->soundLineClear)
     {
@@ -149,9 +202,15 @@ Game *game_new(int x, int y)
 
     return g;
 }
-// ----------------------------------------
-// Libère les ressources associées au jeu
-// ----------------------------------------
+/**
+ * Libère toutes les ressources détenues par une instance de Game.
+ *
+ * @param g Instance à détruire. La fonction ne fait rien si g vaut NULL.
+ *
+ * Les ressources sont libérées selon leur type : plateau, polices,
+ * renderer, fenêtre, effets sonores et musiques. Les sous-systèmes SDL
+ * sont ensuite fermés avant la libération de la structure elle-même.
+ */
 void game_del(Game *g)
 {
     if (g)
@@ -208,8 +267,18 @@ void game_del(Game *g)
     }
 }
 
+/**
+ * Redessine entièrement l'écran en fonction de l'état courant du jeu.
+ *
+ * @param g Instance du jeu contenant le renderer et les données du Tetris.
+ *
+ * Le renderer est d'abord effacé. Un switch sélectionne ensuite l'écran
+ * correspondant à STATE_MENU, STATE_PLAY, STATE_GAMEOVER ou STATE_PAUSE.
+ * SDL_RenderPresent affiche finalement l'image complète à l'écran.
+ */
 void game_update(Game *g)
 {
+    // Couleur de fond commune aux différents écrans du jeu.
     SDL_SetRenderDrawColor(g->ren, 24, 24, 24, 255);
     SDL_RenderClear(g->ren);
 
@@ -315,7 +384,8 @@ void game_update(Game *g)
         SDL_SetRenderDrawColor(g->ren, 30, 30, 30, 255);
         SDL_RenderFillRect(g->ren, &stats_bg);
 
-        // Affichage de la matrice fixée
+        // Affichage de la matrice fixée : une valeur nulle représente
+        // une case vide ; les autres valeurs identifient la couleur du bloc.
         for (int i = 0; i < 20; i++)
         {
             for (int j = 0; j < 10; j++)
@@ -336,6 +406,8 @@ void game_update(Game *g)
             {
                 if (g->tet->buffer[i][j] != 0)
                 {
+                    // Conversion des coordonnées locales du buffer 5 x 5
+                    // en coordonnées absolues dans le plateau 20 x 10.
                     int row = g->tet->current_line + i;
                     int col = g->tet->current_column + j;
                     mino_display(g, g->tet->current_type, row, col);
@@ -364,6 +436,8 @@ void game_update(Game *g)
 
                     // Récupère la couleur de base du Tetrimino
                     Color base = TetriminoColors[g->tet->next_type];
+                    // Les teintes claire et sombre donnent un effet de
+                    // relief aux blocs de la zone de prévisualisation.
                     Color light = {
                         base.r + 50 > 255 ? 255 : base.r + 50,
                         base.g + 50 > 255 ? 255 : base.g + 50,
@@ -576,6 +650,16 @@ void game_update(Game *g)
     SDL_RenderPresent(g->ren);
 }
 
+/**
+ * Exécute la boucle principale du jeu jusqu'à la fermeture de la fenêtre.
+ *
+ * @param g Instance du jeu à exécuter.
+ *
+ * La boucle réalise trois opérations principales :
+ *   1. traiter les événements SDL et les commandes du joueur ;
+ *   2. faire descendre automatiquement la pièce selon le niveau ;
+ *   3. redessiner l'écran avec game_update.
+ */
 void game_run(Game *g)
 {
     int running = 1;
@@ -589,6 +673,8 @@ void game_run(Game *g)
     Uint64 current_time;
     float elapsed = 0.0f;
 
+    // La boucle se poursuit tant que le joueur ne ferme pas la fenêtre
+    // et n’appuie pas sur la touche Échap.
     while (running)
     {
         // -------------------
@@ -706,6 +792,10 @@ void game_run(Game *g)
                 int oldLines = g->tet->nbr_lines; // Nombre de lignes avant
                 int oldLevel = g->tet->level;     // Niveau avant
 
+                // Convention de retour de tetris_move_down :
+                //   -1 : la nouvelle pièce ne peut pas apparaître, donc game over ;
+                //    0 : la pièce vient de se fixer sur le plateau ;
+                //    1 : la pièce a simplement été déplacée vers le bas.
                 int ret = tetris_move_down(g->tet);
                 if (ret == -1)
                 {
@@ -732,6 +822,8 @@ void game_run(Game *g)
                         Mix_PlayChannel(-1, g->soundLevel, 0); // Jouer le son pour le "level up"
                     }
                 }
+                // Le compteur est réinitialisé après chaque tentative de
+                // descente afin de recommencer un nouvel intervalle de temps.
                 last_time = current_time;
             }
         }
