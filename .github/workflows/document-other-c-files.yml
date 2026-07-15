@@ -1,0 +1,296 @@
+name: Document other C files
+
+on:
+  push:
+    paths:
+      - '.github/workflows/document-other-c-files.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  document:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v4
+
+      - name: Ajouter les commentaires explicatifs
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def add_module_header(text: str, marker: str, header: str) -> str:
+              if marker not in text:
+                  return header.rstrip() + "\n\n" + text
+              return text
+
+          def add_before(text: str, signature: str, comment: str) -> str:
+              marker = comment.strip().splitlines()[1].strip() if len(comment.strip().splitlines()) > 1 else comment.strip()
+              if marker in text:
+                  return text
+              if signature not in text:
+                  raise RuntimeError(f"Signature introuvable : {signature}")
+              return text.replace(signature, comment.rstrip() + "\n" + signature, 1)
+
+          # ------------------------------------------------------------------
+          # main.c : point d'entrée du programme
+          # ------------------------------------------------------------------
+          path = Path("main.c")
+          text = path.read_text(encoding="utf-8")
+          text = add_module_header(
+              text,
+              "Ce fichier constitue le point d'entrée du programme Tetris.",
+              """/*
+           * main.c
+           *
+           * Ce fichier constitue le point d'entrée du programme Tetris.
+           * Il initialise le générateur aléatoire, crée l'instance principale
+           * du jeu, lance la boucle d'exécution puis libère les ressources.
+           */"""
+          )
+          text = add_before(
+              text,
+              "int main(int argc, char *argv[])",
+              """/**
+           * Point d'entrée de l'application.
+           *
+           * @param argc Nombre d'arguments transmis au programme.
+           * @param argv Tableau contenant les arguments de la ligne de commande.
+           * @return EXIT_SUCCESS si le jeu se termine normalement,
+           *         EXIT_FAILURE si son initialisation échoue.
+           *
+           * Les arguments ne sont pas utilisés par le jeu. La fonction crée
+           * une fenêtre à la position (50, 50), exécute la boucle principale
+           * avec game_run, puis détruit proprement l'instance avec game_del.
+           */"""
+          )
+          text = text.replace(
+              "    srand((unsigned)time(NULL));",
+              "    // Initialise la génération aléatoire utilisée pour choisir les Tetriminos.\n    srand((unsigned)time(NULL));",
+              1
+          ) if "Initialise la génération aléatoire" not in text else text
+          text = text.replace(
+              "    int pos_x = 50;\n    int pos_y = 50;",
+              "    // Position initiale de la fenêtre sur l'écran.\n    int pos_x = 50;\n    int pos_y = 50;",
+              1
+          ) if "Position initiale de la fenêtre" not in text else text
+          text = text.replace(
+              "    Game *game = game_new(pos_x, pos_y);",
+              "    // Création de la structure Game et initialisation de SDL.\n    Game *game = game_new(pos_x, pos_y);",
+              1
+          ) if "Création de la structure Game" not in text else text
+          text = text.replace(
+              "    game_run(game);\n    game_del(game);",
+              "    // La fonction reste dans la boucle principale jusqu'à la fermeture du jeu.\n    game_run(game);\n\n    // Libération de la mémoire, des sons, des polices et des ressources SDL.\n    game_del(game);",
+              1
+          ) if "La fonction reste dans la boucle principale" not in text else text
+          path.write_text(text, encoding="utf-8")
+
+          # ------------------------------------------------------------------
+          # mino.c : affichage graphique d'un bloc élémentaire
+          # ------------------------------------------------------------------
+          path = Path("mino.c")
+          text = path.read_text(encoding="utf-8")
+          text = add_module_header(
+              text,
+              "Ce module assure l'affichage d'un mino",
+              """/*
+           * mino.c
+           *
+           * Ce module assure l'affichage d'un mino, c'est-à-dire d'un bloc
+           * élémentaire composant un Tetrimino. Le dessin utilise plusieurs
+           * nuances d'une même couleur afin de produire un léger effet de relief.
+           */"""
+          )
+          text = add_before(
+              text,
+              "void mino_display(Game *g, Type t, int l, int c)",
+              """/**
+           * Dessine un mino dans la fenêtre SDL.
+           *
+           * @param g Instance du jeu contenant le renderer, la taille des blocs
+           *          et les décalages du plateau.
+           * @param t Type du Tetrimino, utilisé pour sélectionner sa couleur.
+           * @param l Indice de ligne du bloc dans le plateau.
+           * @param c Indice de colonne du bloc dans le plateau.
+           *
+           * La position en pixels est calculée à partir de la ligne, de la
+           * colonne, de la taille d'un mino et des décalages du plateau. Le bloc
+           * est ensuite dessiné avec une couleur de base, une bordure claire en
+           * haut et à gauche, puis une bordure sombre en bas et à droite.
+           */"""
+          )
+          text = text.replace(
+              "    if (t < TYPE_I || t > TYPE_Z)",
+              "    // Une valeur de type invalide ne doit pas indexer le tableau des couleurs.\n    if (t < TYPE_I || t > TYPE_Z)",
+              1
+          ) if "ne doit pas indexer le tableau des couleurs" not in text else text
+          text = text.replace(
+              "    Color base = TetriminoColors[t];",
+              "    // La couleur claire et la couleur sombre sont bornées entre 0 et 255.\n    Color base = TetriminoColors[t];",
+              1
+          ) if "sont bornées entre 0 et 255" not in text else text
+          path.write_text(text, encoding="utf-8")
+
+          # ------------------------------------------------------------------
+          # tetris.c : logique du plateau et des Tetriminos
+          # ------------------------------------------------------------------
+          path = Path("tetris.c")
+          text = path.read_text(encoding="utf-8")
+          text = add_module_header(
+              text,
+              "Ce module contient la logique principale du Tetris.",
+              """/*
+           * tetris.c
+           *
+           * Ce module contient la logique principale du Tetris : définition
+           * des sept Tetriminos et de leurs rotations, création du plateau,
+           * déplacements, collisions, rotation, fixation des pièces, suppression
+           * des lignes, calcul du score, progression des niveaux et vitesse de chute.
+           *
+           * Le plateau possède 20 lignes et 10 colonnes. La pièce courante est
+           * représentée dans un buffer de 5 x 5 cases avant d'être fixée dans
+           * la matrice principale.
+           */"""
+          )
+          if "Dimensions : [type][rotation][ligne][colonne]" not in text:
+              text = text.replace(
+                  "const char tetriminos[7][4][5][5] = {",
+                  """/*
+           * Table des formes des Tetriminos.
+           *
+           * Dimensions : [type][rotation][ligne][colonne].
+           * Chaque type possède quatre orientations stockées dans une matrice
+           * de 5 x 5. Une valeur nulle représente une case vide ; une valeur de
+           * 1 à 7 représente un bloc et permet aussi d'identifier sa couleur.
+           */
+          const char tetriminos[7][4][5][5] = {""",
+                  1
+              )
+
+          docs = {
+              "Tetris *tetris_new()": """/**
+           * Crée une nouvelle structure Tetris.
+           *
+           * @return Adresse de la structure allouée, ou NULL en cas d'échec.
+           *
+           * La matrice du plateau et le buffer de la pièce sont vidés. Les types
+           * courant et suivant sont ensuite choisis aléatoirement. Les autres
+           * paramètres de partie sont initialisés lors du lancement ou du reset.
+           */""",
+              "void tetris_del(Tetris *tet)": """/**
+           * Libère la mémoire occupée par une structure Tetris.
+           *
+           * @param tet Structure à détruire. Une valeur NULL est acceptée.
+           */""",
+              "void tetris_reset(Tetris *tet)": """/**
+           * Prépare un nouveau Tetrimino dans le buffer de déplacement.
+           *
+           * @param tet État logique de la partie.
+           *
+           * La prochaine pièce devient la pièce courante, une nouvelle pièce
+           * suivante est tirée, la position de départ est rétablie et la rotation
+           * initiale est copiée dans le buffer 5 x 5.
+           */""",
+              "int tetris_can_go_left(Tetris *tet)": """/**
+           * Vérifie si la pièce courante peut se déplacer d'une colonne à gauche.
+           *
+           * @param tet État logique de la partie.
+           * @return 1 si le déplacement est possible, 0 en cas de mur ou collision.
+           */""",
+              "void tetris_move_left(Tetris *tet)": """/**
+           * Déplace la pièce courante d'une colonne vers la gauche si possible.
+           *
+           * @param tet État logique de la partie.
+           */""",
+              "int tetris_can_go_right(Tetris *tet)": """/**
+           * Vérifie si la pièce courante peut se déplacer d'une colonne à droite.
+           *
+           * @param tet État logique de la partie.
+           * @return 1 si le déplacement est possible, 0 en cas de mur ou collision.
+           */""",
+              "void tetris_move_right(Tetris *tet)": """/**
+           * Déplace la pièce courante d'une colonne vers la droite si possible.
+           *
+           * @param tet État logique de la partie.
+           */""",
+              "int tetris_can_go_down(Tetris *tet)": """/**
+           * Vérifie si la pièce courante peut descendre d'une ligne.
+           *
+           * @param tet État logique de la partie.
+           * @return 1 si la case inférieure est libre, 0 si le sol ou un bloc
+           *         déjà fixé empêche la descente.
+           */""",
+              "int tetris_move_down(Tetris *tet)": """/**
+           * Tente de faire descendre la pièce courante d'une ligne.
+           *
+           * @param tet État logique de la partie.
+           * @return 1 si la pièce a effectivement descendu ;
+           *         0 si elle ne pouvait plus descendre, a été fixée au plateau
+           *           et a été remplacée par la pièce suivante ;
+           *        -1 si la pièce est bloquée dès son apparition, ce qui indique
+           *           la fin de la partie.
+           */""",
+              "int tetris_is_valid_position(Tetris *tet, char new_buffer[5][5])": """/**
+           * Vérifie qu'une configuration temporaire de la pièce est valide.
+           *
+           * @param tet État logique de la partie.
+           * @param new_buffer Forme 5 x 5 à tester, généralement après rotation.
+           * @return 1 si toutes les cases sont dans le plateau et libres, 0 sinon.
+           */""",
+              "void tetris_rotate(Tetris *tet)": """/**
+           * Effectue la rotation suivante de la pièce lorsque celle-ci est valide.
+           *
+           * @param tet État logique de la partie.
+           *
+           * La nouvelle orientation est d'abord construite dans un buffer
+           * temporaire. Elle n'est copiée dans la pièce courante qu'après la
+           * vérification des limites du plateau et des collisions.
+           */""",
+              "void tetris_shift_board(Tetris *tet)": """/**
+           * Fixe la pièce courante dans le plateau et met la partie à jour.
+           *
+           * @param tet État logique de la partie.
+           *
+           * La fonction copie les blocs du buffer dans la matrice, détecte les
+           * lignes complètes, décale les lignes restantes, actualise le score
+           * selon le nombre de lignes supprimées et augmente le niveau toutes
+           * les dix lignes, avec un niveau maximal égal à 15.
+           */""",
+              "float tetris_get_drop_speed(Tetris *tet)": """/**
+           * Calcule l'intervalle de temps entre deux descentes automatiques.
+           *
+           * @param tet État logique de la partie contenant le niveau courant.
+           * @return Durée en secondes avant la prochaine descente automatique.
+           *
+           * Le niveau est borné entre 1 et 15 et la durée minimale est limitée
+           * à 0,007 seconde afin d'éviter une vitesse numériquement excessive.
+           */"""
+          }
+
+          for signature, comment in docs.items():
+              text = add_before(text, signature, comment)
+
+          if "Les coordonnées globales permettent de comparer" not in text:
+              text = text.replace(
+                  "                int row = tet->current_line + i;\n                int col = tet->current_column + j;",
+                  "                // Les coordonnées globales permettent de comparer le buffer au plateau.\n                int row = tet->current_line + i;\n                int col = tet->current_column + j;",
+                  1
+              )
+
+          path.write_text(text, encoding="utf-8")
+          PY
+
+          # Le fichier de workflow est temporaire : il est supprimé dans le même commit.
+          rm -f .github/workflows/document-other-c-files.yml
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add main.c mino.c tetris.c .github/workflows/document-other-c-files.yml
+
+          if ! git diff --cached --quiet; then
+            git commit -m "Ajout de commentaires explicatifs dans les fichiers C"
+            git push
+          fi
